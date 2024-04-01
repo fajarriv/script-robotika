@@ -8,28 +8,28 @@ public class MoveCar : MonoBehaviour
 {
     public WheelCollider LeftWheel;
     public WheelCollider RightWheel;
-    public float SteerAngle;
     public AiSensor pathSensor;
-    public float turnSpeed = 5f;
+    public float turnSpeed = 7f;
     public float currentSpeed;
     private float maxSteerAngle = 40;
-    public float maxSpeed = 1500f;
+    public float maxSpeed = 1300f;
+    public Vector3 centerOfMass;
 
     [Header("Sensors")]
-    public float sensorLength = 3f;
-    public Vector3 frontSensorPosition = new Vector3(0f, 0.2f, 0.5f);
-    public float frontSideSensorPosition = 0.2f;
-    public float frontSensorAngle = 30;
+    public float sensorLength = 9f;
+    public Vector3 frontSensorPosition = new Vector3(0f, 0.8f, 1.7f);
+    public float frontSideSensorPosition = 1f;
+    public float frontSensorAngle = 35;
     public bool avoiding = false;
     public float avoidMultiplier = 0f;
     private float targetSteerAngle = 0;
 
     public List<Transform> pathNodes;
     private int currentPath = 0;
-    public float steerAngle = 0;
 
     void Start()
     {
+        GetComponent<Rigidbody>().centerOfMass = centerOfMass;
         pathSensor = GetComponent<AiSensor>();
 
         GameObject path = FindPath();
@@ -150,11 +150,11 @@ public class MoveCar : MonoBehaviour
 
                     if (hit.normal.x < 0)
                     {
-                        avoidMultiplier = -0.8f;
-                    }
-                    else
-                    {
-                        avoidMultiplier = 0.8f;
+                    //    avoidMultiplier = -0.7f;
+                    //}
+                    //else
+                    //{
+                        avoidMultiplier = 1f;
                     }
                 }
             }
@@ -163,7 +163,6 @@ public class MoveCar : MonoBehaviour
         if (avoiding)
         {
             targetSteerAngle = maxSteerAngle * avoidMultiplier;
-            steerAngle = maxSteerAngle * avoidMultiplier;
         }
     }
 
@@ -188,8 +187,6 @@ public class MoveCar : MonoBehaviour
         Vector3 relativeVector = transform.InverseTransformPoint(pathNodes[currentPath].position);
         float newSteer = (relativeVector.x / relativeVector.magnitude) * maxSteerAngle;
         targetSteerAngle = newSteer;
-
-        steerAngle = newSteer;
     }
 
     // modify so the picked path is the furthest path

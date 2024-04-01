@@ -6,12 +6,12 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class AiSensor : MonoBehaviour
 {
-    public float distance = 10;
-    public float angle = 30;
-    public float height = 1.0f;
+    public float distance = 35;
+    public float angle = 40;
+    public float height = 3f;
     public float steep = 2;
     public Color meshColor = Color.red;
-    public int scanFrequency = 30;
+    public int scanFrequency = 100;
     public LayerMask layers;
     public List<GameObject> Objects = new List<GameObject>();
     public GameObject obstacle;
@@ -21,6 +21,7 @@ public class AiSensor : MonoBehaviour
     int count;
     float scanInterval;
     float scanTimer;
+    Vector3 frontSensorPosition = new Vector3(0f, 0.8f, 1.7f);
 
     void Start()
     {
@@ -39,7 +40,7 @@ public class AiSensor : MonoBehaviour
 
     private void Scan()
     {
-        count = Physics.OverlapSphereNonAlloc(transform.position, distance, colliders, layers, QueryTriggerInteraction.Collide);
+        count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y, distance, colliders, layers, QueryTriggerInteraction.Collide);
 
         Objects.Clear();
         obstacle = null;
@@ -59,7 +60,7 @@ public class AiSensor : MonoBehaviour
 
     public bool IsInsight(GameObject obj)
     {
-        Vector3 origin = transform.position;
+        Vector3 origin = transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y;
         Vector3 dest = obj.transform.position;
         Vector3 direction = dest - origin;
 
@@ -173,10 +174,10 @@ public class AiSensor : MonoBehaviour
         if (mesh)
         {
             Gizmos.color = meshColor;
-            Gizmos.DrawMesh(mesh, transform.position, transform.rotation);
+            Gizmos.DrawMesh(mesh, transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y, transform.rotation);
         }
 
-        Gizmos.DrawWireSphere(transform.position, distance);
+        //Gizmos.DrawWireSphere(transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y, distance);
         for (int i = 0; i < count; ++i)
         {
             Gizmos.DrawSphere(colliders[i].transform.position, 0.2f);
