@@ -46,7 +46,7 @@ public class AiSensor : MonoBehaviour
         for (int i = 0; i < count; ++i)
         {
             GameObject obj = colliders[i].gameObject;
-            if (IsInsight(obj) && obj.CompareTag("Untagged") && obj.name.Contains("Track_line"))
+            if (IsInsight(obj) && obj.CompareTag("Untagged") && (obj.name.Contains("Track_line") || obj.name.Contains("Track_Corner")))
             {
                 Objects.Add(obj);
             }

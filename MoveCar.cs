@@ -3,144 +3,194 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
+[ExecuteInEditMode]
 public class MoveCar : MonoBehaviour
 {
-    //public Transform path;
-
-    //private List<Transform> nodes;
-    //private int currentNode = 0;
-
     public WheelCollider LeftWheel;
     public WheelCollider RightWheel;
     public float SteerAngle;
     public AiSensor pathSensor;
-    public GameObject path;
+    public float turnSpeed = 5f;
+    public float currentSpeed;
+    private float maxSteerAngle = 40;
+    public float maxSpeed = 1500f;
 
-   private float maxSteerAngle = 40f;
+    [Header("Sensors")]
+    public float sensorLength = 3f;
+    public Vector3 frontSensorPosition = new Vector3(0f, 0.2f, 0.5f);
+    public float frontSideSensorPosition = 0.2f;
+    public float frontSensorAngle = 30;
+    public bool avoiding = false;
+    public float avoidMultiplier = 0f;
+    private float targetSteerAngle = 0;
 
+    public List<Transform> pathNodes;
+    private int currentPath = 0;
+    public float steerAngle = 0;
 
     void Start()
     {
         pathSensor = GetComponent<AiSensor>();
-        //Transform[] pathTransforms = path.GetComponentsInChildren<Transform>();
 
-        //nodes = new List<Transform>();
+        GameObject path = FindPath();
+        pathNodes = new List<Transform>();
 
-        //for (int i = 0; i < pathTransforms.Length; i++)
-        //{
-        //    if (pathTransforms[i] != path.transform)
-        //    {
-        //        nodes.Add(pathTransforms[i]);
-        //    }
-        //}
-        path = FindPath();
+        if (transform != path.transform)
+        {
+            pathNodes.Add(path.transform);
+        }
     }
 
     void Update()
     {
-        //CheckWaypointDistance();
+        if (pathNodes.Count > 0)
+        {
+            CheckWaypointDistance();
+        }
         MoveWheels();
-        path = FindPath();
-
-        // check if obstacle exist
-        if (pathSensor.obstacle != null)
+        GameObject path = FindPath();
+        if (!pathNodes.Contains(path.transform))
         {
-            AvoidObstacle(pathSensor.obstacle);
+            pathNodes.Add(path.transform);
         }
-        else
-        {
-            RunSteer(path);
-
-        }
-
-
-        if (path)
-        {
-        }
-        //Sensors();
+        RunSteer();
+        Sensor();
+        LerpToSteerAngle();
     }
 
-    private void CheckObstacle()
+    private void CheckWaypointDistance()
     {
-        if (pathSensor.obstacle)
+        if (Vector3.Distance(transform.position, pathNodes[currentPath].position) < 10f)
         {
-
+            if (currentPath == pathNodes.Count - 1)
+            {
+                currentPath = 0;
+            }
+            else
+            {
+                currentPath++;
+            }
         }
     }
 
-
-    private void AvoidObstacle(GameObject obstacle)
+    private void Sensor()
     {
-        Vector3 obstacelRelativeVector = transform.InverseTransformPoint(obstacle.transform.position);
+        RaycastHit hit;
+        Vector3 sensorStartPos = transform.position;
+        sensorStartPos += transform.forward * frontSensorPosition.z;
+        sensorStartPos += transform.up * frontSensorPosition.y;
+        avoidMultiplier = 0;
+        avoiding = false;
 
-        float steerConstant; 
-
-        if(obstacelRelativeVector.z >= 0)
+        // front
+        if (Physics.Raycast(sensorStartPos, transform.forward, out hit, sensorLength))
         {
-            steerConstant = 0.2f;
+            if (hit.collider.CompareTag("Terrain"))
+            {
+                Debug.DrawLine(sensorStartPos, hit.point);
+                avoiding = true;
+            }
         }
-        else
+
+        // front right
+        sensorStartPos += transform.right * frontSideSensorPosition;
+        if (Physics.Raycast(sensorStartPos, transform.forward, out hit, sensorLength))
         {
-            steerConstant = -0.2f;
+            if (hit.collider.CompareTag("Terrain"))
+            {
+                Debug.DrawLine(sensorStartPos, hit.point);
+                avoiding = true;
+                avoidMultiplier -= 0.5f;
+            }
+        }   
+
+        // front right angle
+        else if (Physics.Raycast(sensorStartPos, Quaternion.AngleAxis(frontSensorAngle, transform.up) * transform.forward, out hit, sensorLength))
+        {
+            if (hit.collider.CompareTag("Terrain"))
+            {
+                Debug.DrawLine(sensorStartPos, hit.point);
+                avoiding = true;
+                avoidMultiplier -= 0.2f;
+            }
         }
 
+        // front left 
+        sensorStartPos -= transform.right * frontSideSensorPosition * 2;
+        if (Physics.Raycast(sensorStartPos, transform.forward, out hit, sensorLength))
+        {
+            if (hit.collider.CompareTag("Terrain"))
+            {
+                Debug.DrawLine(sensorStartPos, hit.point);
+                avoiding = true;
+                avoidMultiplier += 0.5f;
+            }
+        }
+        
+        // front left angle
+        else if (Physics.Raycast(sensorStartPos, Quaternion.AngleAxis(-frontSensorAngle, transform.up) * transform.forward, out hit, sensorLength))
+        {
+            if (hit.collider.CompareTag("Terrain"))
+            {
+                Debug.DrawLine(sensorStartPos, hit.point);
+                avoiding = true;
+                avoidMultiplier += 0.2f;
+            }
+        }
 
-        if (Vector3.Distance(transform.position, obstacle.transform.position)< 10f) {
-            float newSteer = ((obstacelRelativeVector.x  + steerConstant )/ obstacelRelativeVector.magnitude) * maxSteerAngle;
+        //front center
+        if (avoidMultiplier == 0)
+        {
+            if (Physics.Raycast(sensorStartPos, transform.forward, out hit, sensorLength))
+            {
+                if (hit.collider.CompareTag("Terrain"))
+                {
+                    Debug.DrawLine(sensorStartPos, hit.point);
+                    avoiding = true;
 
-            LeftWheel.steerAngle = newSteer;
-            RightWheel.steerAngle = newSteer;
-            SteerAngle = newSteer;
+                    if (hit.normal.x < 0)
+                    {
+                        avoidMultiplier = -0.8f;
+                    }
+                    else
+                    {
+                        avoidMultiplier = 0.8f;
+                    }
+                }
+            }
+        }
 
+        if (avoiding)
+        {
+            targetSteerAngle = maxSteerAngle * avoidMultiplier;
+            steerAngle = maxSteerAngle * avoidMultiplier;
         }
     }
 
     private void MoveWheels()
     {
-        LeftWheel.motorTorque = 50f;
-        RightWheel.motorTorque = 50f;
+        currentSpeed = 2 * Mathf.PI * LeftWheel.radius * LeftWheel.rpm * 60 / 1000;
+
+        if (currentSpeed < maxSpeed)
+        {
+            LeftWheel.motorTorque = 100f;
+            RightWheel.motorTorque = 100f;
+        }
+        else
+        {
+            LeftWheel.motorTorque = 0;
+            RightWheel.motorTorque = 0;
+        }
     }
 
-    private void RunSteer(GameObject path)
+    private void RunSteer()
     {
-        Vector3 relativeVector = transform.InverseTransformPoint(path.transform.position);
+        Vector3 relativeVector = transform.InverseTransformPoint(pathNodes[currentPath].position);
         float newSteer = (relativeVector.x / relativeVector.magnitude) * maxSteerAngle;
+        targetSteerAngle = newSteer;
 
-        LeftWheel.steerAngle = newSteer;
-        RightWheel.steerAngle = newSteer;
-        SteerAngle = newSteer;
+        steerAngle = newSteer;
     }
-
-    //private void CheckWaypointDistance()
-    //{
-    //    if (Vector3.Distance(transform.position, nodes[currentNode].position) < 10f)
-    //    {
-    //        if (currentNode == nodes.Count - 1)
-    //        {
-    //            currentNode = 0;
-    //        }
-    //        else
-    //        {
-    //            currentNode++;
-    //        }
-    //    }
-    //}
-
-    //private void Sensors()
-    //{
-    //    RaycastHit hit;
-    //    float sensorLength = 30f;
-
-    //    if (Physics.Raycast(transform.position, transform.forward, out hit, sensorLength))
-    //    {
-    //        if (hit.collider.CompareTag("Terrain"))
-    //        {
-    //            Debug.DrawLine(transform.position, hit.point, Color.red);
-    //        }
-    //    }
-    //}
-
 
     // modify so the picked path is the furthest path
     GameObject FindPath()
@@ -159,5 +209,11 @@ public class MoveCar : MonoBehaviour
             return tmp;
         }
         return null;
+    }
+
+    void LerpToSteerAngle()
+    {
+        LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
+        RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
     }
 }
