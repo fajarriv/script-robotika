@@ -47,7 +47,7 @@ public class ObstacleSensor : MonoBehaviour
         count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y, distance, colliders, layers, QueryTriggerInteraction.Collide);
 
         Objects.Clear();
-        obstacle = null;
+        //obstacle = null;
         for (int i = 0; i < count; ++i)
         {
             GameObject obj = colliders[i].gameObject;
