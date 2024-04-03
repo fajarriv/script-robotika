@@ -254,9 +254,9 @@ public class MoveCar : MonoBehaviour
             {
                 if (Vector3.Distance(transform.position, obj.transform.position) >= Vector3.Distance(transform.position, tmp.transform.position))
                 {
-                    if (!(pathNodes[pathNodes.Count - 1].name.Equals("Track_line_type_01_30m_free_obs") &&
-                        (obj.name.Equals("Track_line_type_01_30m_free_obs (1)") ||
-                        obj.name.Equals("Track_line_type_01_30m_free_obs (2)") ||
+                    if (!(pathNodes[pathNodes.Count - 1].name.Equals("Track_line_type_01_30m_free_obs") &
+                        (obj.name.Equals("Track_line_type_01_30m_free_obs (1)") |
+                        obj.name.Equals("Track_line_type_01_30m_free_obs (2)") |
                         obj.name.Equals("Track_line_type_01_30m_free_obs (3)"))))
                     {
                         tmp = obj;
@@ -271,8 +271,16 @@ public class MoveCar : MonoBehaviour
 
     void LerpToSteerAngle()
     {
-        LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
-        RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
+        if (pathNodes[currentPath].name.Equals("Track_Corner_90d_type_01_30x30m_free_obs"))
+        {
+            LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
+            RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
+        }
+        else
+        {
+            LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
+            RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * turnSpeed);
+        }
     }
     private void Scan()
     {
@@ -335,18 +343,22 @@ public class MoveCar : MonoBehaviour
             //    }
             //}
 
-            //// Kena sensor kiri
-            //if (deltaAngleSideL <= angle)
-            //{
-            //    if (directionSideL.z <= sideDistance)
-            //    {
-            //        avoidMultiplier += 0.2f;
-            //        targetSteerAngle = maxSteerAngle * avoidMultiplier;
-            //        indicator = true;
-            //    }
-            //}
+            // Kena sensor kiri
+            if (deltaAngleSideL <= angle)
+            {
+                if (directionSideL.z <= sideDistance)
+                {
+                    if (obj.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
+                    {
+                        avoidMultiplier = 1.1f;
+                        avoiding = true;
+                        targetSteerAngle = maxSteerAngle * avoidMultiplier;
+                        indicator = true;
+                    }
+                }
+            }
 
-            // Kena sensor depan
+            // Kena sensor depanx
             if (deltaAngleFront <= angle)
             {
                 if (directionFront.z <= distance)
