@@ -14,7 +14,7 @@ public class AiSensor : MonoBehaviour
     public int scanFrequency = 100;
     public LayerMask layers;
     public List<GameObject> Objects = new List<GameObject>();
-    public GameObject obstacle;
+
 
     Collider[] colliders = new Collider[50];
     Mesh mesh;
@@ -22,6 +22,9 @@ public class AiSensor : MonoBehaviour
     float scanInterval;
     float scanTimer;
     Vector3 frontSensorPosition = new Vector3(0f, 0.8f, 1.7f);
+
+    // corner handling
+    //public List<GameObject> visitedCorner = new List<GameObject>();
 
     void Start()
     {
@@ -43,18 +46,16 @@ public class AiSensor : MonoBehaviour
         count = Physics.OverlapSphereNonAlloc(transform.position + transform.forward * frontSensorPosition.z + transform.transform.up * frontSensorPosition.y, distance, colliders, layers, QueryTriggerInteraction.Collide);
 
         Objects.Clear();
-        obstacle = null;
+
         for (int i = 0; i < count; ++i)
         {
             GameObject obj = colliders[i].gameObject;
+
             if (IsInsight(obj) && obj.CompareTag("Untagged") && (obj.name.Contains("Track_line") || obj.name.Contains("Track_Corner")))
             {
                 Objects.Add(obj);
             }
-            if (IsInsight(obj) && obj.CompareTag("Terrain"))
-            {
-                obstacle = obj;
-            }
+
         }
     }
 
