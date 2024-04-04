@@ -47,6 +47,8 @@ public class MoveCar : MonoBehaviour
     int count;
     float scanInterval;
     float scanTimer;
+    public GameObject conditionals1;
+    public GameObject conditionals2;
 
     void Start()
     {
@@ -70,10 +72,22 @@ public class MoveCar : MonoBehaviour
             CheckWaypointDistance();
         }
         MoveWheels();
-        GameObject path = FindPath();
-        if (!pathNodes.Contains(path))
+        scanTimer -= Time.fixedDeltaTime;
+        if (scanTimer < 0)
         {
-            pathNodes.Add(path);
+            GameObject path = FindPath();
+            if (!pathNodes.Contains(path) && path != null)
+            {
+                pathNodes.Add(path);
+
+                if (path.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)"))
+                {
+                    if(conditionals1 != null)
+                    {
+                        pathNodes.Add(conditionals1);
+                    }
+                }
+            }
         }
         RunSteer();
         Sensor();
@@ -122,6 +136,10 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    avoidMultiplier = -1.125f;
+                }
             }
         }
 
@@ -138,6 +156,10 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    avoidMultiplier = -1.125f;
+                }
             }
         }
 
@@ -152,6 +174,10 @@ public class MoveCar : MonoBehaviour
                 if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
                 {
                     avoidMultiplier = 1.1f;
+                }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    avoidMultiplier = -1.125f;
                 }
             }
         }
@@ -169,6 +195,11 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    avoidMultiplier = -1.125f;
+                }
+
             }
         }
 
@@ -212,6 +243,11 @@ public class MoveCar : MonoBehaviour
                     Debug.DrawLine(sensorStartPos, hit.point);
                     avoidMultiplier = 1.1f;
                 }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    Debug.DrawLine(sensorStartPos, hit.point);
+                    avoidMultiplier = -1.125f;
+                }
             }
         }
 
@@ -223,7 +259,22 @@ public class MoveCar : MonoBehaviour
 
     private void MoveWheels()
     {
+        float condMaxSpeed = 400f;
         currentSpeed = 2 * Mathf.PI * LeftWheel.radius * LeftWheel.rpm * 60 / 1000;
+
+        //if (pathNodes[currentPath].name.Equals("Track_Corner_90d_type_01_15x15m_free_obs"))
+        //{
+        //    if (currentSpeed < maxSpeed)
+        //    {
+        //        LeftWheel.motorTorque = 100f;
+        //        RightWheel.motorTorque = 100f;
+        //    }
+        //    else
+        //    {
+        //        LeftWheel.motorTorque = 0;
+        //        RightWheel.motorTorque = 0;
+        //    }
+        //}
 
         if (currentSpeed < maxSpeed)
         {
@@ -252,20 +303,53 @@ public class MoveCar : MonoBehaviour
             GameObject tmp = pathSensor.Objects[0];
             foreach (GameObject obj in pathSensor.Objects)
             {
-                if (Vector3.Distance(transform.position, obj.transform.position) >= Vector3.Distance(transform.position, tmp.transform.position))
+                //if (Vector3.Distance(transform.position, obj.transform.position) >= Vector3.Distance(transform.position, tmp.transform.position))
+                //{
+                //    if (!(obj.name.Equals("Track_line_type_01_30m_free_obs (1)") ||
+                //         obj.name.Equals("Track_line_type_01_30m_free_obs (2)") ||
+                //         obj.name.Equals("Track_line_type_01_30m_free_obs (3)"))){
+                //        tmp = obj;
+                //    }
+                //    else
+                //    {
+                //        if (!(pathNodes[pathNodes.Count - 1].name.Equals("Track_line_type_01_30m_free_obs")))
+                //        {
+                //            tmp = obj;
+                //        }
+                //    }
+                //}
+                if (!(pathNodes[pathNodes.Count - 1].name.Equals("Track_line_type_01_30m_free_obs")))
                 {
-                    if (!(pathNodes[pathNodes.Count - 1].name.Equals("Track_line_type_01_30m_free_obs") &
-                        (obj.name.Equals("Track_line_type_01_30m_free_obs (1)") |
-                        obj.name.Equals("Track_line_type_01_30m_free_obs (2)") |
-                        obj.name.Equals("Track_line_type_01_30m_free_obs (3)"))))
+                    if (Vector3.Distance(transform.position, obj.transform.position) >= Vector3.Distance(transform.position, tmp.transform.position))
                     {
                         tmp = obj;
                     }
                 }
+                else
+                {
+                    if (!(obj.name.Equals("Track_line_type_01_30m_free_obs (1)") ||
+                         obj.name.Equals("Track_line_type_01_30m_free_obs (2)") ||
+                         obj.name.Equals("Track_line_type_01_30m_free_obs (3)")))
+                    {
+                        tmp = obj;
+                    }
+                    if (obj.name.Equals("Track_line_type_01_30m_free_obs (1)")){
+                        conditionals1 = obj;
+                    }
+                    if (obj.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs"))
+                    {
+                        conditionals2 = obj;
+                    }
+                }
+
             }
 
             return tmp;
         }
+        //if ((pathNodes[pathNodes.Count - 1].name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)") && conditionals1 != null))
+        //{
+        //    return conditionals1;
+        //}
         return null;
     }
 
@@ -273,8 +357,8 @@ public class MoveCar : MonoBehaviour
     {
         if (pathNodes[currentPath].name.Equals("Track_Corner_90d_type_01_30x30m_free_obs"))
         {
-            LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
-            RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
+            LeftWheel.steerAngle = Mathf.Lerp(LeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.225f);
+            RightWheel.steerAngle = Mathf.Lerp(RightWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.225f);
         }
         else
         {
@@ -330,18 +414,19 @@ public class MoveCar : MonoBehaviour
 
 
             //// Kena sensor kanan
-            //if (deltaAngleSideR <= angle)
-            //{
-            //    if (directionSideR.z <= sideDistance)
-            //    {
-            //        if (obj.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
-            //        {
-            //            avoidMultiplier = 1.1f;
-            //        }
-            //        targetSteerAngle = maxSteerAngle * avoidMultiplier;
-            //        indicator = true;
-            //    }
-            //}
+            if (deltaAngleSideR <= angle)
+            {
+                if (directionSideR.z <= sideDistance)
+                {
+                    if (obj.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
+                    {
+                        avoidMultiplier = 1.1f;
+                        avoiding = true;
+                        targetSteerAngle = maxSteerAngle * avoidMultiplier;
+                        indicator = true;
+                    }
+                }
+            }
 
             // Kena sensor kiri
             if (deltaAngleSideL <= angle)
