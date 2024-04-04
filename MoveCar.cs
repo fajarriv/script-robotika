@@ -72,23 +72,20 @@ public class MoveCar : MonoBehaviour
             CheckWaypointDistance();
         }
         MoveWheels();
-        scanTimer -= Time.fixedDeltaTime;
-        if (scanTimer < 0)
+        GameObject path = FindPath();
+        if (!pathNodes.Contains(path) && path != null)
         {
-            GameObject path = FindPath();
-            if (!pathNodes.Contains(path) && path != null)
-            {
-                pathNodes.Add(path);
+            pathNodes.Add(path);
 
-                if (path.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)"))
+            if (path.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)"))
+            {
+                if (conditionals1 != null)
                 {
-                    if(conditionals1 != null)
-                    {
-                        pathNodes.Add(conditionals1);
-                    }
+                    pathNodes.Add(conditionals1);
                 }
             }
         }
+
         RunSteer();
         Sensor();
         scanTimer -= Time.fixedDeltaTime;
@@ -215,6 +212,10 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                {
+                    avoidMultiplier = -1.125f;
+                }
             }
 
         }
@@ -262,30 +263,32 @@ public class MoveCar : MonoBehaviour
         float condMaxSpeed = 400f;
         currentSpeed = 2 * Mathf.PI * LeftWheel.radius * LeftWheel.rpm * 60 / 1000;
 
-        //if (pathNodes[currentPath].name.Equals("Track_Corner_90d_type_01_15x15m_free_obs"))
+        //if (pathNodes[currentPath].name.Contains("15x15m"))
         //{
-        //    if (currentSpeed < maxSpeed)
+        //    if (currentSpeed < condMaxSpeed)
         //    {
         //        LeftWheel.motorTorque = 100f;
         //        RightWheel.motorTorque = 100f;
         //    }
         //    else
         //    {
-        //        LeftWheel.motorTorque = 0;
-        //        RightWheel.motorTorque = 0;
+        //        LeftWheel.motorTorque = 5f;
+        //        RightWheel.motorTorque = 5f;
         //    }
         //}
-
-        if (currentSpeed < maxSpeed)
-        {
-            LeftWheel.motorTorque = 100f;
-            RightWheel.motorTorque = 100f;
-        }
-        else
-        {
-            LeftWheel.motorTorque = 0;
-            RightWheel.motorTorque = 0;
-        }
+        //else
+        //{
+            if (currentSpeed < maxSpeed)
+            {
+                LeftWheel.motorTorque = 100f;
+                RightWheel.motorTorque = 100f;
+            }
+            else
+            {
+                LeftWheel.motorTorque = 0;
+                RightWheel.motorTorque = 0;
+            }
+        //}
     }
 
     private void RunSteer()
