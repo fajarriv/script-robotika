@@ -45,6 +45,7 @@ public class MoveCar : MonoBehaviour
     public List<Transform> pathNodes;
     public int currentPath = 0;
     public GameObject temporary;
+    public GameObject temporary2;
 
     // Mesh sensors
     readonly Collider[] colliders = new Collider[1000];
@@ -89,7 +90,10 @@ public class MoveCar : MonoBehaviour
         }
         RunSteer();
         SensorObs();
-        Brake();
+        if(temporary2 == null)
+        {
+            Brake();
+        }
         LerpToSteerAngle();
     }
 
@@ -315,18 +319,20 @@ public class MoveCar : MonoBehaviour
                     if (!(obj.name.Equals("Track_line_type_01_30m_free_obs (1)") ||
                          obj.name.Equals("Track_line_type_01_30m_free_obs (2)") ||
                              obj.name.Equals("Track_line_type_01_30m_free_obs (3)")))
-                        {
-                            tmp = obj;
-                        }
-                        // Save straight line after the U turn
-                        if (obj.name.Equals("Track_line_type_01_30m_free_obs (1)"))
-                        {
+                    {
+                        tmp = obj;
+                    }
+                    // Save straight line after the U turn
+                    if (obj.name.Equals("Track_line_type_01_30m_free_obs (1)"))
+                    {
                         temporary = obj;
                     }
                 }
-
+                if (obj.name.Equals("Track_line_type_01_30m_free_obs (9)"))
+                {
+                    temporary2 = obj;
+                }
             }
-
             return tmp;
         }
         return null;
@@ -338,22 +344,22 @@ public class MoveCar : MonoBehaviour
         if (pathNodes[currentPath].name.Contains("Track_Corner"))
         {
             //maxSpeed = 1400;
-            BackLeftWheel.brakeTorque = 25f;
-            BackRightWheel.brakeTorque = 25f;
-            FrontLeftWheel.brakeTorque = 25f;
-            FrontRightWheel.brakeTorque = 25f;
+            BackLeftWheel.brakeTorque = 28f;
+            BackRightWheel.brakeTorque = 28f;
+            FrontLeftWheel.brakeTorque = 28f;
+            FrontRightWheel.brakeTorque = 28f;
 
             //BackLeftWheel.motorTorque = 40;
             //BackRightWheel.motorTorque = 40;
         }
         else
         {
-          //  maxSpeed = 1500;
+            //  maxSpeed = 1500;
             BackLeftWheel.brakeTorque = 0f;
             BackRightWheel.brakeTorque = 0f;
             FrontLeftWheel.brakeTorque = 0f;
             FrontRightWheel.brakeTorque = 0f;
-              //          BackLeftWheel.motorTorque = -5f;
+            //          BackLeftWheel.motorTorque = -5f;
             //BackRightWheel.motorTorque = -5f;
 
         }
@@ -361,8 +367,8 @@ public class MoveCar : MonoBehaviour
         //reverse torque when there is obstacle
         if (avoidMultiplier != 0)
         {
-            BackLeftWheel.motorTorque = -5f;
-            BackRightWheel.motorTorque = -5f;
+            BackLeftWheel.motorTorque = -3f;
+            BackRightWheel.motorTorque = -3f;
         }
 
     }
