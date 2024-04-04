@@ -22,13 +22,13 @@ public class MoveCar : MonoBehaviour
     public AiSensor pathSensor;
 
     [Header("Obstacle Sensors config")]
-    public float distance = 9;
+    public float distance = 15;
     public float sideDistance = 5;
     public float angle = 20;
     public float height = 1;
     public Color meshColor = Color.blue;
     //public int scanFrequency = 30;
-    public float sensorLength = 9f;
+    public float sensorLength = 15f;
     public Vector3 frontSensorPosition = new Vector3(0f, 0.8f, 1.7f);
     public float frontSideSensorPositionObs = 1f;
     //public float frontSensorAngle = 35;
@@ -39,7 +39,7 @@ public class MoveCar : MonoBehaviour
     [Header("SteerControl")]
     public bool isAvoiding = false;
     public float avoidMultiplier = 0f;
-    private float targetSteerAngle = 0;
+    public float targetSteerAngle = 0;
 
     [Header("Path")]
     public List<Transform> pathNodes;
@@ -81,7 +81,7 @@ public class MoveCar : MonoBehaviour
         {
             pathNodes.Add(path.transform);
             // Add temporary variable if the next path is the U turn
-            if (path.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)") && temporary!=null)
+            if (path.name.Equals("Track_Corner_90d_type_01_15x15m_free_obs (1)") && temporary != null)
             {
                 pathNodes.Add(temporary.transform);
                 temporary = null;
@@ -89,6 +89,7 @@ public class MoveCar : MonoBehaviour
         }
         RunSteer();
         SensorObs();
+        Brake();
         LerpToSteerAngle();
     }
 
@@ -119,8 +120,8 @@ public class MoveCar : MonoBehaviour
         }
         else
         {
-            BackLeftWheel.motorTorque = 0f;
-            BackRightWheel.motorTorque = 0f;
+            BackLeftWheel.motorTorque = 0;
+            BackRightWheel.motorTorque = 0;
         }
     }
 
@@ -154,7 +155,7 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
-                else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
                 {
                     Debug.DrawLine(originFront, hit.point);
                     avoidMultiplier = -1.125f;
@@ -165,19 +166,19 @@ public class MoveCar : MonoBehaviour
         // SIDE RIGHT SENSOR
         // Check if it hits Right side area
         originFront += transform.right * frontSideSensorPositionObs;
-        if(Physics.Raycast(originFront, transform.forward, out hit, sensorLength))
+        if (Physics.Raycast(originFront, transform.forward, out hit, sensorLength))
         {
             Debug.DrawLine(originFront, hit.point);
             if (hit.collider.CompareTag("Terrain"))
             {
                 isAvoiding = true;
-                avoidMultiplier -= 0.5f;
+                avoidMultiplier -= 0.6f;
                 // stuck hitbox 1
                 if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
                 {
                     avoidMultiplier = 1.1f;
                 }
-                else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
                 {
                     Debug.DrawLine(originFront, hit.point);
                     avoidMultiplier = -1.125f;
@@ -189,13 +190,13 @@ public class MoveCar : MonoBehaviour
         {
             Debug.DrawLine(originFront, hit.point);
             isAvoiding = true;
-            avoidMultiplier -= 0.2f;
+            avoidMultiplier -= 0.4f;
             // stuck hitbox 1
             if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
             {
                 avoidMultiplier = 1.1f;
             }
-            else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+            if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
             {
                 Debug.DrawLine(originFront, hit.point);
                 avoidMultiplier = -1.125f;
@@ -219,7 +220,7 @@ public class MoveCar : MonoBehaviour
                 {
                     avoidMultiplier = 1.1f;
                 }
-                else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
                 {
                     Debug.DrawLine(originFront, hit.point);
                     avoidMultiplier = -1.125f;
@@ -227,17 +228,17 @@ public class MoveCar : MonoBehaviour
             }
         }
         // Check if it hits Left side in angle
-        else if (Physics.Raycast(originFront, Quaternion.AngleAxis(frontSensorAngleObs, transform.up) * transform.forward, out hit, sensorLength))
+        else if (Physics.Raycast(originFront, Quaternion.AngleAxis(-frontSensorAngleObs, transform.up) * transform.forward, out hit, sensorLength))
         {
             Debug.DrawLine(originFront, hit.point);
             isAvoiding = true;
-            avoidMultiplier += 0.3f;
+            avoidMultiplier += 0.4f;
             // stuck hitbox 1
             if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
             {
                 avoidMultiplier = 1.1f;
             }
-            else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+            if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
             {
                 Debug.DrawLine(originFront, hit.point);
                 avoidMultiplier = -1.125f;
@@ -253,7 +254,7 @@ public class MoveCar : MonoBehaviour
                 if (hit.collider.CompareTag("Terrain") && !hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
                 {
                     Debug.DrawLine(originFront, hit.point);
-                    isAvoiding= true;
+                    isAvoiding = true;
 
                     if (hit.normal.x < 0)
                     {
@@ -265,11 +266,11 @@ public class MoveCar : MonoBehaviour
                     }
                 }
                 // hitbox 1 stuck
-                else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (10)"))
                 {
                     avoidMultiplier = 1.1f;
                 }
-                else if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
+                if (hit.collider.name.Equals("Track_Fence_line_type_01_white_block_1&5m_free (19)"))
                 {
                     Debug.DrawLine(originFront, hit.point);
                     avoidMultiplier = -1.125f;
@@ -303,8 +304,8 @@ public class MoveCar : MonoBehaviour
                 if (!currentFurthestNode.Equals("Track_line_type_01_30m_free_obs"))
                 {
                     if (Vector3.Distance(transform.position, obj.transform.position) >= Vector3.Distance(transform.position, tmp.transform.position))
-                    { 
-                    tmp = obj;
+                    {
+                        tmp = obj;
                     }
 
                 }
@@ -313,13 +314,13 @@ public class MoveCar : MonoBehaviour
                     // condition to make sure not taking straight line again
                     if (!(obj.name.Equals("Track_line_type_01_30m_free_obs (1)") ||
                          obj.name.Equals("Track_line_type_01_30m_free_obs (2)") ||
-                         obj.name.Equals("Track_line_type_01_30m_free_obs (3)")))
-                    {
-                        tmp = obj;
-                    }
-                    // Save straight line after the U turn
-                    if( obj.name.Equals("Track_line_type_01_30m_free_obs (1)"))
-                    {
+                             obj.name.Equals("Track_line_type_01_30m_free_obs (3)")))
+                        {
+                            tmp = obj;
+                        }
+                        // Save straight line after the U turn
+                        if (obj.name.Equals("Track_line_type_01_30m_free_obs (1)"))
+                        {
                         temporary = obj;
                     }
                 }
@@ -331,13 +332,48 @@ public class MoveCar : MonoBehaviour
         return null;
     }
 
+    void Brake()
+    {
+
+        if (pathNodes[currentPath].name.Contains("Track_Corner"))
+        {
+            //maxSpeed = 1400;
+            BackLeftWheel.brakeTorque = 25f;
+            BackRightWheel.brakeTorque = 25f;
+            FrontLeftWheel.brakeTorque = 25f;
+            FrontRightWheel.brakeTorque = 25f;
+
+            //BackLeftWheel.motorTorque = 40;
+            //BackRightWheel.motorTorque = 40;
+        }
+        else
+        {
+          //  maxSpeed = 1500;
+            BackLeftWheel.brakeTorque = 0f;
+            BackRightWheel.brakeTorque = 0f;
+            FrontLeftWheel.brakeTorque = 0f;
+            FrontRightWheel.brakeTorque = 0f;
+              //          BackLeftWheel.motorTorque = -5f;
+            //BackRightWheel.motorTorque = -5f;
+
+        }
+
+        //reverse torque when there is obstacle
+        if (avoidMultiplier != 0)
+        {
+            BackLeftWheel.motorTorque = -5f;
+            BackRightWheel.motorTorque = -5f;
+        }
+
+    }
+
     void LerpToSteerAngle()
     {
 
         if (pathNodes[currentPath].name.Equals("Track_Corner_90d_type_01_30x30m_free_obs"))
         {
-            FrontLeftWheel.steerAngle = Mathf.Lerp(FrontLeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
-            FrontRightWheel.steerAngle = Mathf.Lerp(FrontRightWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.22f);
+            FrontLeftWheel.steerAngle = Mathf.Lerp(FrontLeftWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.1f);
+            FrontRightWheel.steerAngle = Mathf.Lerp(FrontRightWheel.steerAngle, targetSteerAngle, Time.deltaTime * 0.1f);
         }
         else
         {
